@@ -2,6 +2,7 @@ from fastapi import FastAPI,Request
 from pydantic import BaseModel,Field
 from typing import Annotated
 from fastapi.responses import Response
+from html import escape
 import os
 #loading the env
 from dotenv import load_dotenv
@@ -17,7 +18,15 @@ app = FastAPI(
 class UserMessage(BaseModel):
     message : str
 
+def conversation_gather():
+    return f""""
+    <Gather input="speech" action="{BASE_URL}/process-speech" method="POST" speechTimeout="auto">
+        <Say>Hey how can i help you?</Say>
+    </Gather>
 
+    <Say> I didn't hear you anything? </Say>
+    <Redirect>{BASE_URL}/voice</Redirect>
+    """
 
 @app.get('/')
 async def home():
@@ -50,18 +59,8 @@ async def voice(request: Request):
 
     twiml = f"""
     <Response>
-        <Gather
-            input="speech"
-            action="{BASE_URL}/process-speech"
-            method="POST"
-            language="en-IN"
-            speechTimeout="3"
-        >
-            <Say>Hello! How can I help you?</Say>
-        </Gather>
-            <Say>
-                I didn't hear anything. Goodbye.
-            </Say>
+        <Say> You have Reached your main artificial and making progress </Say>
+        {conversation_gather()}
     </Response>
     """
 
@@ -81,12 +80,13 @@ async def process_speech(request: Request):
 
     print(f"User Spoken: {speech_result}")
     print(f"Confidence: {confidence}")
-
+    safe_search = escape(speech_result or "something")
     twiml = f"""
     <Response>
         <Say>
             You said: {speech_result}
         </Say>
+        {conversation_gather()}
     </Response>
     """
 
