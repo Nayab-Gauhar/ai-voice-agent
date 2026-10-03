@@ -9,7 +9,10 @@ authors = [
 requires-python = ">=3.14"
 dependencies = [
     "fastapi>=0.142.2",
+    "ngrok>=1.7.0",
     "python-dotenv>=1.2.4",
+    "python-multipart>=0.0.32",
+    "twilio>=9.11.2",
     "uvicorn[standard]>=0.54.0",
 ]
 
