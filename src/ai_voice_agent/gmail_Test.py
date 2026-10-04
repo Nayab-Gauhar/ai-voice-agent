@@ -7,4 +7,4 @@ tools = get_gmail_tools()
 for i in tools:
     print(i.name)
     print(i.description)
-    print(i.get_graph)
+    # print(i.get_graph)

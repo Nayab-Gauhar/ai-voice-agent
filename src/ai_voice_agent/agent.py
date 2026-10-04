@@ -5,6 +5,7 @@ from langchain_core.messages import HumanMessage, AIMessage
 from langchain_core.tools import tool
 from langchain.agents import create_agent
 from ai_voice_agent.integrations.gmail_tools import get_gmail_tools
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 #defining the tools
 gmail_tools = get_gmail_tools()
@@ -21,7 +22,9 @@ def get_ai_message(user_message : str) -> str:
     })
     return result["messages"][-1].content
 
-llm = ChatGroq(model="openai/gpt-oss-120b")
+# llm = ChatGroq(model="openai/gpt-oss-20b")
+llm = ChatGoogleGenerativeAI(model="gemini-3.5-flash")
+print((llm.invoke("jldfjldf")))
 # start = time.time()
 agent = create_agent(
     model=llm,
