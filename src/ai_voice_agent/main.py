@@ -3,11 +3,13 @@ from pydantic import BaseModel,Field
 from typing import Annotated
 from fastapi.responses import Response
 from html import escape
+from ai_voice_agent.agent import get_ai_message
 import os
 #loading the env
 from dotenv import load_dotenv
 load_dotenv()
 BASE_URL = os.getenv("NGROK_URL")
+
 
 app = FastAPI(
     title="Gmail Calling Agent",
@@ -21,9 +23,7 @@ class UserMessage(BaseModel):
 def conversation_gather():
     return f""""
     <Gather input="speech" action="{BASE_URL}/process-speech" method="POST" speechTimeout="auto">
-        <Say>Hey how can i help you?</Say>
     </Gather>
-
     <Say> I didn't hear you anything? </Say>
     <Redirect>{BASE_URL}/voice</Redirect>
     """
@@ -55,11 +55,11 @@ async def voice(request: Request):
 
     print(f"Incoming call from: {caller}")
     print(f"Call SID: {call_sid}")
-    print(dict(form_data))
+    # print(dict(form_data))
 
     twiml = f"""
     <Response>
-        <Say> You have Reached your main artificial and making progress </Say>
+        <Say> You have making progress. Great!!!!</Say>
         {conversation_gather()}
     </Response>
     """
@@ -80,11 +80,16 @@ async def process_speech(request: Request):
 
     print(f"User Spoken: {speech_result}")
     print(f"Confidence: {confidence}")
-    safe_search = escape(speech_result or "something")
+    if not speech_result:
+        response_text = "Sorry I didn't hear it."
+    else:
+        response_text = get_ai_message(speech_result)
+    print(f"AI Message : {response_text}")
+    safe_speech_for_xml = escape(response_text)
     twiml = f"""
     <Response>
         <Say>
-            You said: {speech_result}
+            {safe_speech_for_xml}
         </Say>
         {conversation_gather()}
     </Response>
