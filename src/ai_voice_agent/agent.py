@@ -11,20 +11,10 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 gmail_tools = get_gmail_tools()
 
 load_dotenv()
-def get_ai_message(user_message : str) -> str:
-    result = agent.invoke({
-        "messages":[
-            {
-                "role":"user",
-                "content":user_message,
-            }
-        ]
-    })
-    return result["messages"][-1].content
 
 # llm = ChatGroq(model="openai/gpt-oss-20b")
-llm = ChatGoogleGenerativeAI(model="gemini-3.5-flash")
-print((llm.invoke("jldfjldf")))
+llm = ChatGoogleGenerativeAI(model="gemini-3.8-flash")
+# print((llm.invoke("jldfjldf")).content)
 # start = time.time()
 agent = create_agent(
     model=llm,
@@ -46,8 +36,36 @@ Important rules:
 """
 )
 
+def extract_text(content) -> str:
+    """
+    Convert LangChain/Gemini response content into plain text.
+    """
+    if isinstance(content,str):
+        return content
+    if isinstance(content,list):
+        text_block = []
 
+        for block in content:
+            if isinstance(block,dict):
+                if block.get("type") == "text":
+                    text_block.append(block.get("text",""))
+        return "".join(text_block)
 
+    return str(content)
+
+def get_ai_message(user_message : str) -> str:
+    result = agent.invoke({
+        "messages":[
+            {
+                "role":"user",
+                "content":user_message,
+            }
+        ]
+    })
+    final_result = result["messages"][-1]
+    return extract_text(final_result.content)
+
+# print((get_ai_message("Find the weather")))
 # result = llm.invoke("hey this is nayab")
 # print(result.content)
 # print(time.time()- start)
