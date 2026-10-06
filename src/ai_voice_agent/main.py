@@ -53,15 +53,30 @@ async def voice(request: Request):
 
     twiml = f"""
     <Response>
-        <Say>WebSocket test started. You can speak now.</Say>
-        <Connect>
-            <Stream url="{WSS_URL}/ws" />
-        </Connect>
+
+        <Start>
+            <Stream
+                name="test_stream"
+                url="{WSS_URL}/ws"
+                statusCallback="{BASE_URL}/stream-status"
+                statusCallbackMethod="POST"
+                track="inbound_track"
+            />
+        </Start>
+
+        <Say>
+            WebSocket connection test started.
+            Please speak now.
+        </Say>
+
+        <Pause length="20"/>
+
     </Response>
     """
 
-    print("TwiML being sent:")
+    print("\n===== TWIML =====")
     print(twiml)
+    print("=================\n")
 
     return Response(
         content=twiml,
@@ -103,21 +118,52 @@ async def process_speech(request: Request):
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
 
+    print("\n🔥 Vonage WebSocket request received")
+
     await websocket.accept()
 
-    print("✅ WebSocket connected")
+    print("✅ Vonage WebSocket connected")
 
     try:
         while True:
 
-            message = await websocket.receive_text()
+            audio = await websocket.receive_bytes()
 
-            print("Client:", message)
-
-            await websocket.send_text(
-                f"Server received: {message}"
+            print(
+                f"🎙️ Audio received: {len(audio)} bytes"
             )
 
     except WebSocketDisconnect:
+        print("❌ Vonage WebSocket disconnected")
 
-        print("❌ WebSocket disconnected")
+    except Exception as e:
+        print("🔥 WebSocket error:", repr(e))
+
+@app.get("/answer")
+async def answer():
+    return [
+        {
+            "action": "talk",
+            "text": "Hello! You are connected to the AI voice agent."
+        },
+        {
+            "action": "connect",
+            "endpoint": [
+                {
+                    "type": "websocket",
+                    "uri": f"{WSS_URL}/ws",
+                    "content-type": "audio/l16;rate=16000"
+                }
+            ]
+        }
+    ]
+
+@app.post("/event")
+async def event(request: Request):
+    data = await request.json()
+
+    print("\n===== VONAGE EVENT =====")
+    print(data)
+    print("========================\n")
+
+    return {"status": "ok"}

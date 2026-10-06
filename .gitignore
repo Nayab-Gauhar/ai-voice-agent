@@ -15,3 +15,4 @@ wheels/
 #important sav
 credentials.json
 token.json
+secrets/
