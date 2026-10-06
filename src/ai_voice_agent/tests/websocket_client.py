@@ -1,28 +1,23 @@
 import asyncio
+import socket
 import websockets
 
 
 async def main():
 
     async with websockets.connect(
-        "ws://127.0.0.1:8000/ws"
+        "wss://reformist-jubilant-creole.ngrok-free.dev/ws",
+        proxy=None,
+        # family=socket.AF_INET,
     ) as websocket:
 
         print("Connected!")
-        print("Type messages. Type 'exit' to quit.")
 
-        while True:
+        await websocket.send("Hello")
 
-            message = input("You: ")
+        response = await websocket.recv()
 
-            if message.lower() == "exit":
-                break
-
-            await websocket.send(message)
-
-            response = await websocket.recv()
-
-            print("Server:", response)
+        print("Server:", response)
 
 
 asyncio.run(main())

@@ -5,11 +5,13 @@ from fastapi.responses import Response
 from html import escape
 from ai_voice_agent.agent import get_ai_message
 import os
+import json
 #loading the env
 from dotenv import load_dotenv
 load_dotenv()
 import asyncio
 BASE_URL = os.getenv("NGROK_URL")
+WSS_URL = BASE_URL.replace("https://","wss://")
 
 
 app = FastAPI(
@@ -49,21 +51,17 @@ async def test(data:UserMessage):
 @app.post("/voice")
 async def voice(request: Request):
 
-    form_data = await request.form()
-
-    caller = form_data.get("From")
-    call_sid = form_data.get("CallSid")
-
-    print(f"Incoming call from: {caller}")
-    print(f"Call SID: {call_sid}")
-    # print(dict(form_data))
-
     twiml = f"""
     <Response>
-        <Say> You have making progress. Great!!!!</Say>
-        {conversation_gather()}
+        <Say>WebSocket test started. You can speak now.</Say>
+        <Connect>
+            <Stream url="{WSS_URL}/ws" />
+        </Connect>
     </Response>
     """
+
+    print("TwiML being sent:")
+    print(twiml)
 
     return Response(
         content=twiml,
@@ -102,52 +100,24 @@ async def process_speech(request: Request):
     )
 
 
-async def receive_messages(websocket: WebSocket):
-
-    while True:
-        message = await websocket.receive_text()
-
-        print("Client:", message)
-
-
-async def send_messages(websocket: WebSocket):
-
-    count = 1
-
-    while True:
-        await asyncio.sleep(3)
-
-        await websocket.send_text(
-            f"Server message {count}"
-        )
-
-        count += 1
-
-
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
 
     await websocket.accept()
 
-    print("Connected")
-
-    receiver_task = asyncio.create_task(
-        receive_messages(websocket)
-    )
-
-    sender_task = asyncio.create_task(
-        send_messages(websocket)
-    )
+    print("✅ WebSocket connected")
 
     try:
-        await asyncio.gather(
-            receiver_task,
-            sender_task
-        )
+        while True:
+
+            message = await websocket.receive_text()
+
+            print("Client:", message)
+
+            await websocket.send_text(
+                f"Server received: {message}"
+            )
 
     except WebSocketDisconnect:
-        print("Disconnected")
 
-    finally:
-        receiver_task.cancel()
-        sender_task.cancel()
+        print("❌ WebSocket disconnected")
