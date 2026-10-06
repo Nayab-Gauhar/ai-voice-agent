@@ -17,6 +17,7 @@ dependencies = [
     { name = "python-multipart" },
     { name = "twilio" },
     { name = "uvicorn", extra = ["standard"] },
+    { name = "websockets" },
 ]
 
 [package.metadata]
@@ -31,6 +32,7 @@ requires-dist = [
     { name = "python-multipart", specifier = ">=0.0.32" },
     { name = "twilio", specifier = ">=9.11.2" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.54.0" },
+    { name = "websockets", specifier = ">=16.1.1" },
 ]
 
 [[package]]

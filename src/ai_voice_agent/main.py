@@ -1,4 +1,4 @@
-from fastapi import FastAPI,Request
+from fastapi import FastAPI,Request,WebSocket,WebSocketDisconnect
 from pydantic import BaseModel,Field
 from typing import Annotated
 from fastapi.responses import Response
@@ -8,6 +8,7 @@ import os
 #loading the env
 from dotenv import load_dotenv
 load_dotenv()
+import asyncio
 BASE_URL = os.getenv("NGROK_URL")
 
 
@@ -27,7 +28,7 @@ def conversation_gather():
     <Say> I didn't hear you anything? </Say>
     <Redirect>{BASE_URL}/voice</Redirect>
     """
-
+ 
 @app.get('/')
 async def home():
     return {"message":"AI Voice Agent is running!!"}
@@ -99,3 +100,54 @@ async def process_speech(request: Request):
         content=twiml,
         media_type="application/xml"
     )
+
+
+async def receive_messages(websocket: WebSocket):
+
+    while True:
+        message = await websocket.receive_text()
+
+        print("Client:", message)
+
+
+async def send_messages(websocket: WebSocket):
+
+    count = 1
+
+    while True:
+        await asyncio.sleep(3)
+
+        await websocket.send_text(
+            f"Server message {count}"
+        )
+
+        count += 1
+
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+
+    await websocket.accept()
+
+    print("Connected")
+
+    receiver_task = asyncio.create_task(
+        receive_messages(websocket)
+    )
+
+    sender_task = asyncio.create_task(
+        send_messages(websocket)
+    )
+
+    try:
+        await asyncio.gather(
+            receiver_task,
+            sender_task
+        )
+
+    except WebSocketDisconnect:
+        print("Disconnected")
+
+    finally:
+        receiver_task.cancel()
+        sender_task.cancel()
