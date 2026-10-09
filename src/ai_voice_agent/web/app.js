@@ -107,28 +107,57 @@ startButton.addEventListener("click", async () => {
             stopButton.disabled = false;
         };
 
-        websocket.onmessage = (event) => {
-            const message = JSON.parse(event.data)
+        websocket.onmessage = async (event) => {
 
-            if(message.type === "transcript"){
+            // Binary message = audio from Sarvam
+            if (event.data instanceof Blob) {
 
-                if (message.speech_final){
-                    console.log("User utterance",message.text)
+                console.log("🔊 Audio received:", event.data.size, "bytes");
+
+                // Pause microphone recording while the agent speaks
+                if (mediaRecorder?.state === "recording") {
+                    mediaRecorder.pause();
                 }
-                else if(message.is_final){
-                    console.log("Stable Transcript:",message.text)
+
+                const audioBlob = new Blob(
+                    [event.data],
+                    { type: "audio/wav" }
+                );
+
+                const audioUrl = URL.createObjectURL(audioBlob);
+                const audio = new Audio(audioUrl);
+
+                const finishPlayback = () => {
+                    URL.revokeObjectURL(audioUrl);
+
+                    if (mediaRecorder?.state === "paused") {
+                        mediaRecorder.resume();
+                    }
+                };
+
+                audio.addEventListener("ended", finishPlayback, { once: true });
+                audio.addEventListener("error", finishPlayback, { once: true });
+
+                try {
+                    await audio.play();
+                } catch (error) {
+                    console.error("Audio playback failed:", error);
+                    finishPlayback();
                 }
-                else{
-                    console.log("Interim :",message.text)
-                }
-            return;
-        }
-            if(message.type === "ai_response"){
-                console.log("AI : ",message.text)
+
                 return;
             }
 
-            // console.log("Server:", event.data);
+            // Text message = transcript or AI response
+            const message = JSON.parse(event.data);
+
+            if (message.type === "transcript") {
+                console.log("👤 Transcript:", message.text);
+            }
+
+            if (message.type === "ai_response") {
+                console.log("🤖 AI:", message.text);
+            }
         };
 
         websocket.onclose = () => {

@@ -15,6 +15,7 @@ async def connect_to_deepgram():
         "&interim_results=true"
         "&endpointing=300"
         "&punctuate=true"
+        "&vad_events=true"
     )
 
     deepgram_ws = await websockets.connect(
@@ -22,6 +23,7 @@ async def connect_to_deepgram():
         additional_headers={
             "Authorization": f"Token {DEEPGRAM_API_KEY}"
         },
+        ping_timeout=60,
     )
 
     print("Connected to Deepgram")

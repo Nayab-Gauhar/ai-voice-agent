@@ -13,7 +13,7 @@ gmail_tools = get_gmail_tools()
 load_dotenv()
 
 # llm = ChatGroq(model="openai/gpt-oss-20b")
-llm = ChatGoogleGenerativeAI(model="gemini-3.8-flash")
+llm = ChatGoogleGenerativeAI(model="gemini-3.5-flash")
 # print((llm.invoke("jldfjldf")).content)
 # start = time.time()
 agent = create_agent(

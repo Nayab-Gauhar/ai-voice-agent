@@ -6,6 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from ai_voice_agent.agent import get_ai_message
 import os
 import json
+from ai_voice_agent.speech.tts import text_to_speech
 #loading the env
 import asyncio
 from dotenv import load_dotenv
@@ -91,6 +92,15 @@ async def forward_transcript(browser_ws, deepgram_ws):
 
         print("Deepgram:", data)
 
+        if data.get("type") == "SpeechStarted":
+            print("User started speaking!")
+
+            await browser_ws.send_text(json.dumps({
+                "type": "speech_started"
+            }))
+
+            continue
+
         #for getting the transcription
         if data.get("type") != "Results":
             continue
@@ -155,6 +165,12 @@ async def forward_transcript(browser_ws, deepgram_ws):
                     "text":ai_response,
                 })
             )
+
+            audios_response = await asyncio.to_thread(text_to_speech,ai_response)
+
+            await browser_ws.send_bytes(audios_response)
+
+            print("Audio sent to browser",len(audios_response),"bytes")
             #after displaying clear it
             utterance_buffer.clear()
         else:
